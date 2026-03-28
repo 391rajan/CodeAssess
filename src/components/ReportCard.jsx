@@ -44,12 +44,25 @@ const STATUS_CONFIG = {
 };
 
 const getRatingColor = (rating) => {
-  switch (rating) {
-    case 'Good':    return 'bg-green-500/20 text-green-400 border-green-500/30';
-    case 'Average': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-    case 'Poor':    return 'bg-red-500/20 text-red-400 border-red-500/30';
-    default:        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+  if (!rating) return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+  const lower = rating.toLowerCase();
+  if (lower.includes('good') || lower.includes('excellent')) return 'bg-green-500/20 text-green-400 border-green-500/30';
+  if (lower.includes('average')) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+  if (lower.includes('poor') || lower.includes('bad')) return 'bg-red-500/20 text-red-400 border-red-500/30';
+  return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+};
+
+const parseComplexity = (str) => {
+  if (!str) return { notation: '—', explanation: '' };
+  const strTrimmed = str.trim();
+  const match = strTrimmed.match(/^(O\([^)]+\))(.*)/i);
+  if (match) {
+    const notation = match[1];
+    let explanation = match[2].trim();
+    explanation = explanation.replace(/^(with explanation:?\s*|-\s*)/i, '').trim();
+    return { notation, explanation };
   }
+  return { notation: strTrimmed, explanation: '' };
 };
 
 export default function ReportCard({ data, isVisible }) {
@@ -95,55 +108,79 @@ export default function ReportCard({ data, isVisible }) {
       </div>
 
       {/* ─── Content ─── */}
-      <div className="p-5 flex flex-col gap-4 max-h-[60vh] overflow-y-auto">
+      <div className="p-5 flex flex-col gap-5 max-h-[75vh] overflow-y-auto">
 
         {/* PASSED: show AI report if available, otherwise a success note */}
         {status === 'PASSED' && (
           <>
             {aiReport ? (
-              <>
+              <div className="flex flex-col gap-5">
+                {aiReport.overall_rating && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Overall Rating</span>
+                    <span className={clsx("px-3 py-1 rounded-full border text-xs font-bold tracking-wide", getRatingColor(aiReport.overall_rating))}>
+                      {aiReport.overall_rating}
+                    </span>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-accent flex-shrink-0" />
-                    <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider">Time</p>
-                      <p className="font-mono font-medium text-white">{aiReport.time_complexity || '—'}</p>
+                  <div className="bg-black/30 p-3.5 rounded-xl border border-white/5 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-accent flex-shrink-0" />
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Time</p>
                     </div>
+                    <p className="font-mono text-2xl font-bold text-white tracking-tight">
+                      {parseComplexity(aiReport.time_complexity).notation}
+                    </p>
+                    {parseComplexity(aiReport.time_complexity).explanation && (
+                      <p className="text-xs text-gray-400 line-clamp-2 leading-snug mt-1" title={parseComplexity(aiReport.time_complexity).explanation}>
+                        {parseComplexity(aiReport.time_complexity).explanation}
+                      </p>
+                    )}
                   </div>
-                  <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex items-center gap-3">
-                    <HardDrive className="w-5 h-5 text-primary flex-shrink-0" />
-                    <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider">Space</p>
-                      <p className="font-mono font-medium text-white">{aiReport.space_complexity || '—'}</p>
+                  
+                  <div className="bg-black/30 p-3.5 rounded-xl border border-white/5 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <HardDrive className="w-4 h-4 text-primary flex-shrink-0" />
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Space</p>
                     </div>
+                    <p className="font-mono text-2xl font-bold text-white tracking-tight">
+                      {parseComplexity(aiReport.space_complexity).notation}
+                    </p>
+                    {parseComplexity(aiReport.space_complexity).explanation && (
+                      <p className="text-xs text-gray-400 line-clamp-2 leading-snug mt-1" title={parseComplexity(aiReport.space_complexity).explanation}>
+                        {parseComplexity(aiReport.space_complexity).explanation}
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-white">
-                    <Zap className="w-4 h-4 text-yellow-400" />
-                    <h3 className="font-semibold text-sm">Optimization Tips</h3>
+                    <Zap className="w-5 h-5 text-yellow-400 fill-yellow-400/20" />
+                    <h3 className="font-semibold text-sm uppercase tracking-wide text-gray-200">Optimization Tips</h3>
                   </div>
-                  <ul className="space-y-1.5 pl-1">
+                  <div className="flex flex-col gap-2.5">
                     {aiReport.optimization_tips?.map((tip, idx) => (
-                      <li key={idx} className="text-sm text-gray-300 flex items-start gap-2">
-                        <span className="text-accent mt-1">•</span>
-                        <span>{tip}</span>
-                      </li>
+                      <div key={idx} className="bg-white/[0.03] border border-white/5 border-l-4 border-l-primary p-3 rounded-r-lg rounded-l-sm text-sm text-gray-300 flex items-start gap-3 shadow-sm">
+                        <span className="text-primary font-bold font-mono text-xs mt-0.5">{idx + 1}.</span>
+                        <span className="leading-relaxed">{tip}</span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
 
-                <div className="space-y-2 pt-3 border-t border-white/10">
-                  <div className="flex items-center gap-2 text-white">
+                <div className="flex flex-col gap-2 pt-1 border-t border-white/10 mt-1">
+                  <div className="flex items-center gap-2 text-white mt-3 mb-1">
                     <MessageSquare className="w-4 h-4 text-blue-400" />
-                    <h3 className="font-semibold text-sm">Style Feedback</h3>
+                    <h3 className="font-semibold text-sm uppercase tracking-wide text-gray-200">Style Feedback</h3>
                   </div>
-                  <p className="text-sm text-gray-300 italic bg-black/20 p-3 rounded-lg border border-white/5">
-                    "{aiReport.style_feedback}"
-                  </p>
+                  <div className="text-sm text-gray-300 italic bg-white/[0.03] p-3.5 rounded-r-lg rounded-l-sm border border-white/5 border-l-2 border-l-accent leading-relaxed">
+                    {aiReport.style_feedback}
+                  </div>
                 </div>
-              </>
+              </div>
             ) : (
               <p className="text-sm text-green-300 bg-green-500/10 border border-green-500/20 rounded-xl p-4 leading-relaxed">
                 🎉 All test cases passed! Your solution is correct.

@@ -3,25 +3,29 @@ import clsx from 'clsx';
 import Editor from '@monaco-editor/react';
 import { Play, Loader2, AlertCircle } from 'lucide-react';
 
-const PROBLEM_ID = '69c6f44830d84a8630a6a8e7';
 const API_URL = 'http://localhost:5000/api/submit';
 
-const STARTER_CODE = {
-  python: 'def twoSum(nums, target):\n    # Write your code here\n    pass\n',
-  java: 'class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your code here\n        return new int[]{};\n    }\n}',
-  cpp: 'class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        // Write your code here\n        return {};\n    }\n};',
-};
-
-export default function EditorPane({ className, onSubmit }) {
+export default function EditorPane({ className, onSubmit, problem }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [language, setLanguage] = useState('python');
-  const [code, setCode] = useState(STARTER_CODE.python);
+  
+  // Safe initial boilerplate pulling from DB templates.
+  const [code, setCode] = useState(problem?.solutionTemplates?.python || '');
   const [validationError, setValidationError] = useState('');
+
+  // Re-sync code if the problem changes entirely
+  React.useEffect(() => {
+    if (problem?.solutionTemplates) {
+      setLanguage('python');
+      setCode(problem.solutionTemplates.python || '');
+      setValidationError('');
+    }
+  }, [problem]);
 
   const handleLanguageChange = (e) => {
     const lang = e.target.value;
     setLanguage(lang);
-    setCode(STARTER_CODE[lang]);
+    setCode(problem?.solutionTemplates?.[lang] || '');
     setValidationError('');
   };
 
@@ -39,7 +43,7 @@ export default function EditorPane({ className, onSubmit }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          problemId: PROBLEM_ID,
+          problemId: problem._id,
           language,
           code,
         }),

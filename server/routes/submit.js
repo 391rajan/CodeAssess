@@ -4,15 +4,16 @@ const Problem = require("../models/Problem");
 const Submission = require("../models/Submission");
 const User = require("../models/User");
 const { executeCode } = require("../utils/dockerExecutor");
+const { generateAIReview } = require("../utils/aiReviewer");
 
 /**
  * POST /api/submit
  *
  * Receives user code, runs it against hidden test cases in a Docker container,
- * and returns the execution result.
+ * and if all tests pass, generates an AI code review via Claude.
  *
  * Body: { userId, problemId, language, code }
- * Response: { success, data: { status, output, passedCount, totalCount, submissionId? }, error }
+ * Response: { success, data: { status, output, passedCount, totalCount, aiReport?, submissionId? }, error }
  */
 router.post("/", async (req, res) => {
   try {
@@ -43,8 +44,10 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // --- Fetch problem and hidden test cases from MongoDB ---
-    const problem = await Problem.findById(problemId).select("hiddenTestCases title functionName");
+    // --- Fetch problem (include description for AI review) ---
+    const problem = await Problem.findById(problemId).select(
+      "hiddenTestCases title description functionName"
+    );
 
     if (!problem) {
       return res.status(404).json({
@@ -70,6 +73,24 @@ router.post("/", async (req, res) => {
       problem.functionName || "solution"
     );
 
+    // --- AI Review (only for PASSED submissions) ---
+    let aiReport = null;
+
+    if (result.status === "PASSED") {
+      try {
+        aiReport = await generateAIReview(
+          problem.title,
+          problem.description,
+          language,
+          code
+        );
+      } catch (err) {
+        console.error("AI review failed:", err.message);
+        // Don't fail the whole request if AI review fails
+        aiReport = null;
+      }
+    }
+
     // --- Save submission to database (only for authenticated users) ---
     let submissionId = null;
 
@@ -81,20 +102,17 @@ router.post("/", async (req, res) => {
         code,
         status: result.status,
         output: result.output,
-        aiReport: {}, // AI report will be populated later
+        aiReport: aiReport || {},
       });
 
       submissionId = submission._id;
 
       // If all tests passed, add to user's solvedProblems (if not already there)
       if (result.status === "PASSED") {
-        await User.findByIdAndUpdate(
-          userId,
-          {
-            $addToSet: { solvedProblems: problemId },
-            $set: { lastActiveDate: new Date() },
-          }
-        );
+        await User.findByIdAndUpdate(userId, {
+          $addToSet: { solvedProblems: problemId },
+          $set: { lastActiveDate: new Date() },
+        });
       }
     }
 
@@ -106,6 +124,7 @@ router.post("/", async (req, res) => {
         output: result.output,
         passedCount: result.passedCount,
         totalCount: result.totalCount,
+        ...(aiReport && { aiReport }),
         ...(submissionId && { submissionId }),
       },
       error: null,
@@ -121,3 +140,4 @@ router.post("/", async (req, res) => {
 });
 
 module.exports = router;
+
