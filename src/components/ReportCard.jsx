@@ -65,7 +65,7 @@ const parseComplexity = (str) => {
   return { notation: strTrimmed, explanation: '' };
 };
 
-export default function ReportCard({ data, isVisible }) {
+export default function ReportCard({ data, isVisible, onClose }) {
   if (!isVisible || !data) return null;
 
   const { status, output, passedCount, totalCount, aiReport } = data;
@@ -81,7 +81,27 @@ export default function ReportCard({ data, isVisible }) {
       )}
     >
       {/* ─── Header ─── */}
-      <div className="flex items-center justify-between p-5 border-b border-white/10">
+      <div className="flex items-center justify-between p-5 border-b border-white/10 relative">
+        <button 
+          onClick={() => onClose && onClose()}
+          style={{
+            position: "absolute",
+            top: "12px",
+            right: "12px", 
+            background: "rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.2)",
+            color: "white",
+            borderRadius: "50%",
+            width: "32px",
+            height: "32px",
+            cursor: "pointer",
+            fontSize: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}>
+          ✕
+        </button>
         <div className="flex items-center gap-3">
           <StatusIcon
             className={clsx(

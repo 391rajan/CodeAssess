@@ -41,7 +41,7 @@ export default function AdminProblemForm() {
     if (isEditing) {
       const fetchProblem = async () => {
         try {
-          const res = await fetch(`http://localhost:5000/api/admin/problems/${id}`);
+          const res = await fetch(`http://localhost:5000/api/admin/problems/${id}`, { credentials: 'include' });
           const json = await res.json();
           if (json.success) {
             const p = json.data;
@@ -141,7 +141,8 @@ export default function AdminProblemForm() {
       const res = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include'
       });
       const json = await res.json();
       

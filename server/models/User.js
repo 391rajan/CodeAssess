@@ -23,7 +23,19 @@ const userSchema = new mongoose.Schema(
     googleId: {
       type: String,
       unique: true,
-      sparse: true, // Allows multiple null values while enforcing uniqueness on non-null
+      sparse: true,
+    },
+    role: {
+      type: String,
+      enum: {
+        values: ["student", "admin"],
+        message: "Role must be student or admin",
+      },
+      default: "student",
+    },
+    isApproved: {
+      type: Boolean,
+      default: false,
     },
     solvedProblems: [
       {
@@ -39,6 +51,16 @@ const userSchema = new mongoose.Schema(
     lastActiveDate: {
       type: Date,
       default: null,
+    },
+    role: {
+      type: String,
+      enum: ['student', 'admin'],
+      default: 'student',
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
     },
   },
   {

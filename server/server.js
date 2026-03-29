@@ -1,16 +1,20 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 
 const app = express();
 
 // --------------- Middleware ---------------
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
-app.use(express.json({ limit: "5mb" })); // Code submissions can be large
+app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // --------------- Routes ---------------
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/student", require("./routes/student"));
 app.use("/api/submit", require("./routes/submit"));
 app.use("/api/problems", require("./routes/problems"));
 app.use("/api/admin", require("./routes/admin"));

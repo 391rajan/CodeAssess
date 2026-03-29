@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, ArrowLeft, Loader2, Database, ShieldAlert } from 'lucide-react';
+import { Plus, Edit, Trash2, ArrowLeft, Loader2, Database, ShieldAlert, LogOut, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 export default function AdminDashboard() {
+  const { user, logout } = useAuth();
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAdminProblems = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/admin/problems');
+      const res = await fetch('http://localhost:5000/api/admin/problems', { credentials: 'include' });
       const json = await res.json();
       if (json.success) {
         setProblems(json.data);
@@ -33,6 +35,7 @@ export default function AdminDashboard() {
       try {
         const res = await fetch(`http://localhost:5000/api/admin/problems/${id}`, {
           method: 'DELETE',
+          credentials: 'include',
         });
         const json = await res.json();
         if (json.success) {
@@ -73,20 +76,39 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="flex justify-between items-end border-b border-white/10 pb-6">
           <div>
-            <Link to="/" className="text-gray-400 hover:text-white flex items-center gap-2 mb-4 text-sm transition-colors w-fit">
-              <ArrowLeft className="w-4 h-4" /> Back to Platform
-            </Link>
+            <div className="flex gap-4 items-center mb-4">
+               <Link to="/" className="text-gray-400 hover:text-white flex items-center gap-2 text-sm transition-colors w-fit">
+                 <ArrowLeft className="w-4 h-4" /> Back to Platform
+               </Link>
+               <span className="text-gray-600">|</span>
+               <Link to="/admin/users" className="text-accent hover:text-white flex items-center gap-2 text-sm transition-colors w-fit font-semibold">
+                 <Users className="w-4 h-4" /> User Management
+               </Link>
+            </div>
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
               Admin Dashboard
             </h1>
           </div>
-          <Link 
-            to="/admin/new"
-            className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 rounded-lg font-bold text-white transition-all shadow-lg active:scale-95"
-          >
-            <Plus className="w-5 h-5" />
-            Add New Problem
-          </Link>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-semibold text-gray-300">
+               Admin: <span className="text-white font-bold">{user?.name}</span>
+            </span>
+            <button
+               onClick={logout}
+               className="p-2 bg-white/5 hover:bg-red-500/10 text-gray-400 hover:text-red-400 border border-white/10 hover:border-red-500/20 rounded-lg transition-all"
+               title="Logout"
+            >
+               <LogOut className="w-4 h-4" />
+            </button>
+            <div className="w-px h-8 bg-white/10 mx-2" />
+            <Link 
+              to="/admin/new"
+              className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 rounded-lg font-bold text-white transition-all shadow-lg active:scale-95"
+            >
+              <Plus className="w-5 h-5" />
+              Add New Problem
+            </Link>
+          </div>
         </div>
 
         {/* Stats Row */}

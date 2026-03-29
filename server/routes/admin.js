@@ -1,10 +1,56 @@
 const express = require("express");
 const router = express.Router();
 const Problem = require("../models/Problem");
+const User = require("../models/User");
+const { requireAuth, requireAdmin } = require("../middleware/authMiddleware");
+
+// ---------- USER MANAGEMENT ROUTES ----------
+
+// GET /api/admin/users
+// Get all registered students
+router.get("/users", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const users = await User.find({ role: "student" }).sort({ createdAt: -1 }).select("-passwordHash").lean();
+    res.status(200).json({ success: true, data: users });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch users" });
+  }
+});
+
+// PUT /api/admin/users/:id/status
+// Update a student's status (approved, rejected, pending)
+router.put("/users/:id/status", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ success: false, error: "Invalid status" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id, 
+      { status }, 
+      { new: true, runValidators: true }
+    ).select("-passwordHash");
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    res.status(200).json({ success: true, data: updatedUser });
+  } catch (error) {
+    console.error("Error updating user status:", error);
+    res.status(500).json({ success: false, error: "Failed to update user status" });
+  }
+});
+
+// ---------- PROBLEM MANAGEMENT ROUTES ----------
 
 // GET /api/admin/problems
 // Returns all problems (including hiddenTestCases for admin use)
-router.get("/problems", async (req, res) => {
+router.get("/problems", requireAuth, requireAdmin, async (req, res) => {
   try {
     const problems = await Problem.find().sort({ createdAt: -1 }).lean();
     res.status(200).json({ success: true, data: problems });
@@ -16,7 +62,7 @@ router.get("/problems", async (req, res) => {
 
 // GET /api/admin/problems/:id
 // Get a specific problem by ID
-router.get("/problems/:id", async (req, res) => {
+router.get("/problems/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const problem = await Problem.findById(id).lean();
@@ -30,7 +76,7 @@ router.get("/problems/:id", async (req, res) => {
 
 // POST /api/admin/problems
 // Create a new problem
-router.post("/problems", async (req, res) => {
+router.post("/problems", requireAuth, requireAdmin, async (req, res) => {
   try {
     const newProblem = new Problem(req.body);
     const savedProblem = await newProblem.save();
@@ -43,7 +89,7 @@ router.post("/problems", async (req, res) => {
 
 // PUT /api/admin/problems/:id
 // Update an existing problem
-router.put("/problems/:id", async (req, res) => {
+router.put("/problems/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const updatedProblem = await Problem.findByIdAndUpdate(id, req.body, {
@@ -64,7 +110,7 @@ router.put("/problems/:id", async (req, res) => {
 
 // DELETE /api/admin/problems/:id
 // Delete a problem
-router.delete("/problems/:id", async (req, res) => {
+router.delete("/problems/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const deletedProblem = await Problem.findByIdAndDelete(id);

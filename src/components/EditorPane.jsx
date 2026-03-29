@@ -47,6 +47,7 @@ export default function EditorPane({ className, onSubmit, problem }) {
           language,
           code,
         }),
+        credentials: 'include'
       });
 
       const result = await response.json();

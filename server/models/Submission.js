@@ -42,7 +42,7 @@ const submissionSchema = new mongoose.Schema(
     aiReport: {
       time_complexity: { type: String, default: null },
       space_complexity: { type: String, default: null },
-      overall_rating: { type: Number, default: null },
+      overall_rating: { type: String, default: null },
       bugs_or_code_smells: { type: [String], default: [] },
       optimization_tips: { type: [String], default: [] },
       style_feedback: { type: String, default: null },
