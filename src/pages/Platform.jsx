@@ -15,11 +15,14 @@ export default function Platform() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // BUG G FIX: Hint state loaded on mount
+  const [hintState, setHintState] = useState({ hintsUsed: 0, hintsRemaining: 3, hints: [] });
+
   const fetchProblemData = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch public problem by ID instead of fetching all
+      // 1. Fetch public problem list to find current problem (for now)
       const res = await fetch(`http://localhost:5000/api/problems`);
       const json = await res.json();
       if (!res.ok || !json.success || !json.data) {
@@ -28,10 +31,23 @@ export default function Platform() {
       
       const p = json.data.find(prob => prob._id === id);
       if (!p) {
-         // Assuming toast is available or handle error appropriately
          return navigate('/problems');
       }
       setProblem(p);
+
+      // 2. Fetch hint state specifically for this problem and this user (MUST HAVE CREDENTIALS)
+      try {
+        const hintRes = await fetch(`http://localhost:5000/api/hints/${p._id}`, {
+          credentials: 'include'
+        });
+        const hintJson = await hintRes.json();
+        if (hintJson.success) {
+          setHintState(hintJson.data);
+        }
+      } catch (hintErr) {
+        console.error("Failed to load hints", hintErr);
+      }
+
     } catch (err) {
       setError("Could not load problem. Make sure the backend is running on port 5000.");
     } finally {
@@ -50,6 +66,10 @@ export default function Platform() {
   const handleSubmitComplete = (data) => {
     setResult(data);
     setShowReport(true);
+  };
+
+  const handleHintUsed = (newHintData) => {
+    setHintState(newHintData);
   };
 
   if (loading) {
@@ -93,6 +113,8 @@ export default function Platform() {
           className="w-full lg:w-1/2"
           problem={problem}
           onSubmit={handleSubmitComplete}
+          hintState={hintState}
+          onHintUsed={handleHintUsed}
         />
       </div>
 

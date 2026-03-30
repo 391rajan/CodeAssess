@@ -91,6 +91,10 @@ router.post("/", optionalAuth, async (req, res) => {
     let submissionId = null;
     if (userId) {
       try {
+        const HintUsage = require("../models/HintUsage");
+        const hintUsage = await HintUsage.findOne({ userId, problemId });
+        const usedHints = hintUsage ? hintUsage.hintsUsed : 0;
+
         const submission = new Submission({
           userId: userId,
           problemId: problemId,
@@ -99,6 +103,7 @@ router.post("/", optionalAuth, async (req, res) => {
           status: result.status,
           output: result.output || "",
           aiReport: aiReport || {},
+          hintsUsed: usedHints,
         });
         await submission.save();
         submissionId = submission._id;

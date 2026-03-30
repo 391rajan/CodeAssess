@@ -252,7 +252,14 @@ export default function Profile() {
                          </span>
                        </td>
                        <td className="px-6 py-4">
-                         {getStatusBadge(sub.status)}
+                         <div className="flex items-center gap-2">
+                           {getStatusBadge(sub.status)}
+                           {sub.status === 'PASSED' && sub.hintsUsed === 3 && (
+                             <span className="px-2 py-0.5 border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 rounded text-[9px] font-bold uppercase tracking-widest whitespace-nowrap" title="Solved using 3 AI hints">
+                               Solved with hints
+                             </span>
+                           )}
+                         </div>
                        </td>
                        <td className="px-6 py-4 hidden md:table-cell">
                          <span className="text-xs font-mono text-gray-500 tracking-wide">

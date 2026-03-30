@@ -28,6 +28,12 @@ const exampleSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    structuredInput: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    structuredOutput: {
+      type: mongoose.Schema.Types.Mixed,
+    },
   },
   { _id: false }
 );

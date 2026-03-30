@@ -47,6 +47,10 @@ const submissionSchema = new mongoose.Schema(
       optimization_tips: { type: [String], default: [] },
       style_feedback: { type: String, default: null },
     },
+    hintsUsed: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt automatically
