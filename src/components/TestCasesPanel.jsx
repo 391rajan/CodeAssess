@@ -22,76 +22,64 @@ export default function TestCasesPanel({
   const tabs = problem.examples.map((_, i) => `Example ${i + 1}`);
   tabs.push("Custom");
 
-  // Parse results from EditorPane where runResults is now an object
-  // { status, output, results: [] }
+  // Parse per-tab result from the runResults object returned by EditorPane.
+  // runResults shape: { status, output, passedCount, totalCount } | { error }
   const parseResultForTab = (idx) => {
     if (isAnalyzing || !runResults) return null;
 
-    // Handle top-level errors (network/server)
+    // Network / server error
     if (runResults.error) {
-      if (idx === activeTab) return { status: "Error", text: runResults.error };
+      if (idx === activeTab) return { status: 'Error', text: runResults.error };
       return null;
     }
 
-    // Handle compilation errors
-    if (runResults.status === "COMPILE_ERROR") {
-      if (idx === activeTab) return { status: "Error", text: runResults.output };
+    // All tests passed — every example tab shows green, no per-tab output on custom
+    if (runResults.status === 'PASSED') {
+      if (idx < totalExamples) return { status: 'Passed' };
+      return null; // custom tab — no result to show on a full pass
+    }
+
+    // Compile error — show on active tab only
+    if (runResults.status === 'COMPILE_ERROR') {
+      if (idx === activeTab) return { status: 'Error', text: runResults.output };
       return null;
     }
 
-    // If we have an array of results, find the one corresponding to this tab
-    let line = null;
-    if (runResults.results && Array.isArray(runResults.results)) {
-       const targetSubstring = `Test case ${idx + 1}:`;
-       line = runResults.results.find(l => l.includes(targetSubstring));
-    } else if (typeof runResults === 'string') { // Fallback if given raw string
-       const lines = runResults.split('\n');
-       const targetSubstring = `Test case ${idx + 1}:`;
-       line = lines.find(l => l.includes(targetSubstring));
-    }
-    
+    // FAILED — output is newline-joined "Test case N: ..." strings
+    const lines = (runResults.output || '').split('\n').filter(Boolean);
+    const prefix = `Test case ${idx + 1}:`;
+    const line = lines.find(l => l.includes(prefix));
+
     if (!line) {
-      // Show raw output if no specific test line found and we are on active tab
+      // Unknown output format — show on active tab as a warning
       if (idx === activeTab) {
-        return { status: "Warning", text: runResults.output || "No output provided." };
+        return { status: 'Warning', text: runResults.output || 'No output.' };
       }
       return null;
     }
 
-    // Parse the structured text string natively!
-    // Example: "Test case 1: Wrong Answer — got [1,2], expected [0,2]"
-    // Example: "Test case 2: Passed"
-    // Example: "Test case 3: Runtime Error — json.decoder..."
-    const targetSubstring = `Test case ${idx + 1}:`;
-    const textAfterTest = line.split(targetSubstring)[1]?.trim() || "";
-    
-    if (textAfterTest.startsWith("Passed")) {
-      return { status: "Passed", text: textAfterTest };
-    } 
-    
-    if (textAfterTest.startsWith("Wrong Answer")) {
-      // split by "—" 
-      const parts = textAfterTest.split('—');
-      const details = parts.length > 1 ? parts[1].trim() : "";
-      
-      let gotStr = "Unknown";
-      let expStr = "Unknown";
-      
-      // parse "got X, expected Y"
-      const gotMatch = details.match(/got (.*?), expected (.*)/);
-      if (gotMatch) {
-         gotStr = gotMatch[1];
-         expStr = gotMatch[2];
-      }
-      
-      return { status: "Wrong Answer", output: gotStr, expected: expStr };
+    const text = line.split(prefix)[1]?.trim() || '';
+
+    if (text.startsWith('Passed')) {
+      return { status: 'Passed' };
     }
 
-    if (textAfterTest.startsWith("Runtime Error") || textAfterTest.startsWith("Error")) {
-       return { status: "Error", text: textAfterTest };
+    if (text.startsWith('Wrong Answer')) {
+      const parts = text.split('—');
+      const details = parts.length > 1 ? parts[1].trim() : '';
+      const m = details.match(/got (.*?), expected (.*)/);
+      return {
+        status: 'Wrong Answer',
+        output: m ? m[1] : 'Unknown',
+        expected: m ? m[2] : 'Unknown',
+      };
     }
 
-    return { status: "Warning", text: textAfterTest };
+    if (text.startsWith('Runtime Error') || text.startsWith('Error')) {
+      return { status: 'Error', text };
+    }
+
+    return { status: 'Warning', text };
   };
 
   const renderResultBadge = (parsed) => {

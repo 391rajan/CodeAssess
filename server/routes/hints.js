@@ -18,7 +18,7 @@ const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 router.post("/", requireAuth, async (req, res) => {
   try {
     const { problemId, hintLevel, currentCode } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.userId;
 
     // hintLevel: 1, 2, or 3
     if (![1, 2, 3].includes(hintLevel)) {
@@ -115,6 +115,7 @@ Student's current code: ${currentCode || "No code written yet"}`,
         hintLevel,
         hintsUsed: hintUsage.hintsUsed,
         hintsRemaining: 3 - hintUsage.hintsUsed,
+        hints: hintUsage.hints,
       },
     });
   } catch (err) {
@@ -131,7 +132,7 @@ Student's current code: ${currentCode || "No code written yet"}`,
 router.get("/:problemId", requireAuth, async (req, res) => {
   try {
     const hintUsage = await HintUsage.findOne({
-      userId: req.user._id,
+      userId: req.user.userId,
       problemId: req.params.problemId,
     });
 
