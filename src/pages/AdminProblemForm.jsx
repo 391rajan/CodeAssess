@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Save, ArrowLeft, Plus, Trash2, Code, Loader2, AlertCircle } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../utils/animations';
 
 export default function AdminProblemForm() {
   const { id } = useParams();
@@ -162,7 +164,9 @@ export default function AdminProblemForm() {
   if (loading) {
     return (
       <div className="h-screen w-full bg-background flex flex-col items-center justify-center text-white">
-        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="mb-4">
+          <Loader2 className="w-10 h-10 text-primary" />
+        </motion.div>
         <p className="text-gray-400 font-medium">Loading problem payload...</p>
       </div>
     );
@@ -171,11 +175,16 @@ export default function AdminProblemForm() {
   const inputClass = "w-full bg-white/[0.03] border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors";
 
   return (
-    <div className="min-h-screen w-full bg-background text-white p-8">
+    <div className="min-h-screen w-full bg-background text-white p-8 overflow-hidden">
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Header */}
-        <div className="flex justify-between items-center border-b border-white/10 pb-6 sticky top-0 bg-background/90 backdrop-blur-md z-30 pt-4">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex justify-between items-center border-b border-white/10 pb-6 sticky top-0 bg-background/90 backdrop-blur-md z-30 pt-4"
+        >
           <div>
             <Link to="/admin" className="text-gray-400 hover:text-white flex items-center gap-2 mb-2 text-sm transition-colors w-fit">
               <ArrowLeft className="w-4 h-4" /> Back to Dashboard
@@ -184,20 +193,32 @@ export default function AdminProblemForm() {
               {isEditing ? 'Edit Problem Configuration' : 'Add New Problem'}
             </h1>
           </div>
-          <button 
+          <motion.button 
             disabled={submitting}
             onClick={handleSubmit}
-            className="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 rounded-lg font-bold text-white transition-all shadow-lg active:scale-95 disabled:opacity-50"
+            whileHover={submitting ? {} : { scale: 1.02 }}
+            whileTap={submitting ? {} : { scale: 0.98 }}
+            className="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 rounded-lg font-bold text-white transition-all shadow-lg disabled:opacity-50"
           >
-            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            {submitting ? (
+              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <Save className="w-5 h-5" />
+            )}
             {isEditing ? 'Save Changes' : 'Create Problem'}
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
-        <form onSubmit={handleSubmit} className="space-y-8 pb-32">
+        <motion.form 
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          onSubmit={handleSubmit} 
+          className="space-y-8 pb-32"
+        >
           
           {/* Basics */}
-          <div className="glass-card p-8 space-y-6">
+          <motion.div variants={fadeInUp} className="glass-card p-8 space-y-6">
             <h2 className="text-xl font-bold border-b border-white/10 pb-4 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-accent" /> Basic Information
             </h2>
@@ -234,10 +255,10 @@ export default function AdminProblemForm() {
               <label className="block text-sm font-semibold text-gray-300 mb-2">Constraints (HTML supported)</label>
               <textarea name="constraints" value={formData.constraints} onChange={handleChange} rows={3} className={inputClass} placeholder="<ul><li>1 <= nums.length <= 10^4</li></ul>" />
             </div>
-          </div>
+          </motion.div>
 
           {/* Examples */}
-          <div className="glass-card p-8 space-y-6">
+          <motion.div variants={fadeInUp} className="glass-card p-8 space-y-6">
             <div className="flex justify-between items-center border-b border-white/10 pb-4">
               <h2 className="text-xl font-bold">Public Examples</h2>
               <button type="button" onClick={() => addArrayItem('examples')} className="text-sm flex items-center gap-1 text-accent hover:text-white transition-colors">
@@ -246,7 +267,13 @@ export default function AdminProblemForm() {
             </div>
             
             {formData.examples.map((ex, idx) => (
-              <div key={idx} className="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4 relative group">
+              <motion.div 
+                key={idx} 
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                className="p-4 bg-black/20 rounded-xl border border-white/5 space-y-4 relative group"
+              >
                 <button type="button" onClick={() => removeArrayItem(idx, 'examples')} className="absolute top-4 right-4 text-red-400/50 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -264,12 +291,12 @@ export default function AdminProblemForm() {
                     <input type="text" value={ex.explanation} onChange={e => handleArrayChange(idx, 'explanation', e.target.value, 'examples')} className={inputClass} placeholder="Because nums[0] + nums[1] == 9, we return [0, 1]." />
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Solution Templates Manager */}
-          <div className="glass-card p-8 space-y-6 flex flex-col h-[500px]">
+          <motion.div variants={fadeInUp} className="glass-card p-8 space-y-6 flex flex-col h-[500px]">
              <h2 className="text-xl font-bold border-b border-white/10 pb-4 flex items-center gap-2">
               <Code className="w-5 h-5 text-accent" /> Solution Templates
             </h2>
@@ -299,10 +326,10 @@ export default function AdminProblemForm() {
                 }}
               />
             </div>
-          </div>
+          </motion.div>
 
           {/* Hidden Test Cases */}
-          <div className="glass-card p-8 space-y-6">
+          <motion.div variants={fadeInUp} className="glass-card p-8 space-y-6">
             <div className="flex justify-between items-center border-b border-white/10 pb-4">
               <h2 className="text-xl font-bold flex items-center gap-2 text-rose-400">
                 Hidden Test Cases <span className="text-xs font-normal text-gray-400 ml-2">(JSON format required)</span>
@@ -319,7 +346,13 @@ export default function AdminProblemForm() {
             </div>
 
             {formData.hiddenTestCases.map((tc, idx) => (
-              <div key={idx} className="p-4 bg-black/30 rounded-xl border border-white/5 space-y-4 relative group">
+              <motion.div 
+                key={idx} 
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                className="p-4 bg-black/30 rounded-xl border border-white/5 space-y-4 relative group"
+              >
                 <button type="button" onClick={() => removeArrayItem(idx, 'hiddenTestCases')} className="absolute top-4 right-4 text-red-500/50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -333,11 +366,11 @@ export default function AdminProblemForm() {
                     <textarea value={tc.expectedOutput} onChange={e => handleArrayChange(idx, 'expectedOutput', e.target.value, 'hiddenTestCases')} rows={3} className={`${inputClass} font-mono text-sm`} placeholder='[0, 1]' />
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
-        </form>
+        </motion.form>
       </div>
     </div>
   );

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, AlertCircle, LogIn } from 'lucide-react';
+import { AlertCircle, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import { slideUp, staggerContainer, fadeInUp } from '../utils/animations';
 
 export default function Login() {
   const { checkUserStatus } = useAuth();
@@ -53,8 +55,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-background flex items-center justify-center p-6 text-white font-sans">
-      <div className="glass-card w-full max-w-md p-8 relative overflow-hidden">
+    <div className="min-h-screen w-full bg-background flex items-center justify-center p-6 text-white font-sans overflow-hidden">
+      <motion.div 
+        variants={slideUp} 
+        initial="initial" 
+        animate="animate" 
+        className="glass-card w-full max-w-md p-8 relative overflow-hidden"
+      >
         {/* Subtle glowing accent */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-accent" />
         
@@ -65,19 +72,32 @@ export default function Login() {
           <p className="text-gray-400 mt-2">Student Portal Login</p>
         </div>
 
-        {warningMessage && (
-          <div className={`mb-6 p-4 rounded-lg flex items-start gap-3 text-sm leading-relaxed ${
-            warningMessage.toLowerCase().includes('rejected') 
-              ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
-              : 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
-          }`}>
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <p>{warningMessage}</p>
-          </div>
-        )}
+        <AnimatePresence>
+          {warningMessage && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -20 }}
+              className={`mb-6 p-4 rounded-lg flex items-start gap-3 text-sm leading-relaxed ${
+                warningMessage.toLowerCase().includes('rejected') 
+                  ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
+                  : 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
+              }`}
+            >
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <p>{warningMessage}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
+        <motion.form 
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          onSubmit={handleSubmit} 
+          className="space-y-5"
+        >
+          <motion.div variants={fadeInUp}>
             <label className="block text-sm font-semibold text-gray-300 mb-1.5">Email Address</label>
             <input 
               type="email" 
@@ -87,8 +107,8 @@ export default function Login() {
               className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
               placeholder="student@example.com"
             />
-          </div>
-          <div>
+          </motion.div>
+          <motion.div variants={fadeInUp}>
             <label className="block text-sm font-semibold text-gray-300 mb-1.5">Password</label>
             <input 
               type="password" 
@@ -98,9 +118,9 @@ export default function Login() {
               className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
               placeholder="••••••••"
             />
-          </div>
+          </motion.div>
 
-          <div className="flex items-center gap-2">
+          <motion.div variants={fadeInUp} className="flex items-center gap-2">
             <input 
               type="checkbox" 
               name="rememberMe"
@@ -112,17 +132,24 @@ export default function Login() {
             <label htmlFor="rememberMe" className="text-sm text-gray-400 cursor-pointer hover:text-gray-300">
               Remember me for 30 days
             </label>
-          </div>
+          </motion.div>
 
-          <button 
+          <motion.button 
+            variants={fadeInUp}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold transition-all shadow-lg active:scale-[0.98] mt-2 disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold transition-all shadow-lg mt-2 disabled:opacity-50"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
+            {loading ? (
+              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <LogIn className="w-5 h-5" />
+            )}
             Sign In
-          </button>
-        </form>
+          </motion.button>
+        </motion.form>
 
         <p className="mt-6 text-center text-gray-400 text-sm">
           Don't have an account?{' '}
@@ -136,7 +163,7 @@ export default function Login() {
             Administrators Login
           </Link>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

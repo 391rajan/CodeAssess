@@ -3,11 +3,14 @@ import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, ArrowLeft, Loader2, Database, ShieldAlert, LogOut, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion';
+import { staggerContainer, fadeInUp } from '../utils/animations';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [shakingRow, setShakingRow] = useState(null);
 
   const fetchAdminProblems = async () => {
     try {
@@ -31,6 +34,9 @@ export default function AdminDashboard() {
   }, []);
 
   const handleDelete = async (id, title) => {
+    setShakingRow(id);
+    setTimeout(() => setShakingRow(null), 500);
+    
     if (window.confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
       try {
         const res = await fetch(`http://localhost:5000/api/admin/problems/${id}`, {
@@ -59,7 +65,9 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="h-screen w-full bg-background flex flex-col items-center justify-center text-white">
-        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="mb-4">
+          <Loader2 className="w-10 h-10 text-primary" />
+        </motion.div>
         <p className="text-gray-400 font-medium">Loading admin dashboard...</p>
       </div>
     );
@@ -70,11 +78,16 @@ export default function AdminDashboard() {
   const hardCount = problems.filter(p => p.difficulty === 'Hard').length;
 
   return (
-    <div className="min-h-screen w-full bg-background text-white p-8">
+    <div className="min-h-screen w-full bg-background text-white p-8 overflow-hidden">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header */}
-        <div className="flex justify-between items-end border-b border-white/10 pb-6">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex justify-between items-end border-b border-white/10 pb-6"
+        >
           <div>
             <div className="flex gap-4 items-center mb-4">
                <Link to="/" className="text-gray-400 hover:text-white flex items-center gap-2 text-sm transition-colors w-fit">
@@ -93,55 +106,64 @@ export default function AdminDashboard() {
             <span className="text-sm font-semibold text-gray-300">
                Admin: <span className="text-white font-bold">{user?.name}</span>
             </span>
-            <button
+            <motion.button
                onClick={logout}
-               className="p-2 bg-white/5 hover:bg-red-500/10 text-gray-400 hover:text-red-400 border border-white/10 hover:border-red-500/20 rounded-lg transition-all"
+               whileHover={{ backgroundColor: "rgba(239,68,68,0.2)" }}
+               whileTap={{ scale: 0.95 }}
+               className="p-2 text-gray-400 hover:text-red-400 border border-white/10 hover:border-red-500/20 rounded-lg transition-colors"
                title="Logout"
             >
                <LogOut className="w-4 h-4" />
-            </button>
+            </motion.button>
             <div className="w-px h-8 bg-white/10 mx-2" />
-            <Link 
-              to="/admin/new"
-              className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 rounded-lg font-bold text-white transition-all shadow-lg active:scale-95"
-            >
-              <Plus className="w-5 h-5" />
-              Add New Problem
-            </Link>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Link 
+                to="/admin/new"
+                className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 rounded-lg font-bold text-white transition-all shadow-lg"
+              >
+                <Plus className="w-5 h-5" />
+                Add New Problem
+              </Link>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="glass-card p-6 flex flex-col items-start gap-4">
+        <motion.div 
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="grid grid-cols-4 gap-4"
+        >
+          <motion.div variants={fadeInUp} className="glass-card p-6 flex flex-col items-start gap-4">
             <Database className="w-8 h-8 text-blue-400" />
             <div>
               <p className="text-3xl font-bold">{problems.length}</p>
               <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Total Problems</p>
             </div>
-          </div>
-          <div className="glass-card p-6 flex flex-col items-start gap-4">
+          </motion.div>
+          <motion.div variants={fadeInUp} className="glass-card p-6 flex flex-col items-start gap-4">
             <div className="p-2 bg-green-500/20 rounded-lg"><div className="w-4 h-4 bg-green-500 rounded-full"/></div>
             <div>
               <p className="text-3xl font-bold text-green-400">{easyCount}</p>
               <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Easy</p>
             </div>
-          </div>
-          <div className="glass-card p-6 flex flex-col items-start gap-4">
+          </motion.div>
+          <motion.div variants={fadeInUp} className="glass-card p-6 flex flex-col items-start gap-4">
             <div className="p-2 bg-yellow-500/20 rounded-lg"><div className="w-4 h-4 bg-yellow-400 rounded-full"/></div>
             <div>
               <p className="text-3xl font-bold text-yellow-400">{mediumCount}</p>
               <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Medium</p>
             </div>
-          </div>
-          <div className="glass-card p-6 flex flex-col items-start gap-4">
+          </motion.div>
+          <motion.div variants={fadeInUp} className="glass-card p-6 flex flex-col items-start gap-4">
             <div className="p-2 bg-red-500/20 rounded-lg"><div className="w-4 h-4 bg-red-500 rounded-full"/></div>
             <div>
               <p className="text-3xl font-bold text-red-400">{hardCount}</p>
               <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Hard</p>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Table */}
         <div className="glass-card overflow-hidden">
@@ -163,8 +185,20 @@ export default function AdminDashboard() {
                   </td>
                 </tr>
               ) : (
-                problems.map(p => (
-                  <tr key={p._id} className="hover:bg-white/[0.02] transition-colors">
+                problems.map((p, idx) => (
+                  <motion.tr 
+                    key={p._id} 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={shakingRow === p._id 
+                      ? { opacity: 1, y: 0, x: [0, -10, 10, -10, 0] } 
+                      : { opacity: 1, y: 0 }
+                    }
+                    transition={shakingRow === p._id 
+                      ? { duration: 0.4 }
+                      : { delay: idx * 0.04 }
+                    }
+                    className="hover:bg-white/[0.02] transition-colors"
+                  >
                     <td className="p-4 font-medium text-white">{p.title}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full border text-xs font-bold ${getDifficultyBadge(p.difficulty)}`}>
@@ -189,16 +223,18 @@ export default function AdminDashboard() {
                         >
                           <Edit className="w-4 h-4" />
                         </Link>
-                        <button 
+                        <motion.button 
                           onClick={() => handleDelete(p._id, p.title)}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                           className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 rounded-lg transition-colors"
                           title="Delete Problem"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </button>
+                        </motion.button>
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))
               )}
             </tbody>

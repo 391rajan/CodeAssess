@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, Search, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import StudentHeader from '../components/StudentHeader';
+import { motion } from 'framer-motion';
+import { fadeInLeft, staggerContainer, fadeInUp } from '../utils/animations';
 
 export default function ProblemList() {
   const navigate = useNavigate();
@@ -82,9 +84,9 @@ export default function ProblemList() {
   };
 
   const getDifficultyBadge = (diff) => {
-    if (diff === 'Easy') return <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/20">Easy</span>;
-    if (diff === 'Medium') return <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">Medium</span>;
-    return <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20">Hard</span>;
+    if (diff === 'Easy') return <motion.span whileHover={{ scale: 1.1 }} className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/20">Easy</motion.span>;
+    if (diff === 'Medium') return <motion.span whileHover={{ scale: 1.1 }} className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">Medium</motion.span>;
+    return <motion.span whileHover={{ scale: 1.1 }} className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20">Hard</motion.span>;
   };
 
   const validateRate = (probId) => {
@@ -97,7 +99,9 @@ export default function ProblemList() {
   if (loading) {
     return (
       <div className="h-screen w-full bg-[#0a0a0f] flex flex-col items-center justify-center text-white">
-        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="mb-4">
+          <Loader2 className="w-10 h-10 text-primary" />
+        </motion.div>
         <p className="text-gray-400 font-medium">Constructing algorithm grid...</p>
       </div>
     );
@@ -107,22 +111,27 @@ export default function ProblemList() {
     <div className="min-h-screen w-full bg-[#0a0a0f] text-white flex flex-col font-sans relative">
       <StudentHeader />
       
-      <main className="flex-1 w-full max-w-7xl mx-auto p-6 lg:p-10 flex flex-col gap-6 relative z-10">
+      <main className="flex-1 w-full max-w-7xl mx-auto p-6 lg:p-10 flex flex-col gap-6 relative z-10 overflow-hidden">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-white/10 pb-6">
-          <div>
+          <motion.div variants={fadeInLeft} initial="initial" animate="animate">
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent mb-2">
               Problem Catalog
             </h1>
             <p className="text-gray-400 text-sm tracking-wide">
               Showing <span className="text-white font-bold">{filteredProblems.length}</span> of <span className="text-white font-bold">{problems.length}</span> problems
             </p>
-          </div>
+          </motion.div>
         </div>
 
         {/* Filter Bar */}
-        <div className="flex flex-wrap items-center gap-4 bg-white/[0.02] border border-white/10 rounded-xl p-4 shadow-lg backdrop-blur-md">
+        <motion.div 
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="flex flex-wrap items-center gap-4 bg-white/[0.02] border border-white/10 rounded-xl p-4 shadow-lg backdrop-blur-md"
+        >
           {/* Search */}
-          <div className="flex items-center bg-black/40 border border-white/10 rounded-lg px-4 py-2 flex-grow md:max-w-xs focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors">
+          <motion.div variants={fadeInUp} custom={0} className="flex items-center bg-black/40 border border-white/10 rounded-lg px-4 py-2 flex-grow md:max-w-xs focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors">
             <Search className="w-4 h-4 text-gray-500 mr-2" />
             <input 
               type="text"
@@ -131,25 +140,28 @@ export default function ProblemList() {
               onChange={(e) => setSearch(e.target.value)}
               className="bg-transparent text-sm w-full outline-none placeholder-gray-500 text-white"
             />
-          </div>
+          </motion.div>
 
           {/* Difficulty Filters */}
-          <div className="flex items-center gap-2 bg-black/40 border border-white/10 p-1.5 rounded-lg">
-            {['All', 'Easy', 'Medium', 'Hard'].map(diff => (
-              <button
+          <motion.div variants={fadeInUp} custom={1} className="flex items-center gap-2 bg-black/40 border border-white/10 p-1.5 rounded-lg">
+            {['All', 'Easy', 'Medium', 'Hard'].map((diff, diffIdx) => (
+              <motion.button
                 key={diff}
                 onClick={() => setDifficulty(diff)}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 + (diffIdx * 0.05) }}
                 className={`px-4 py-1.5 rounded-md text-xs font-bold transition-colors ${
                   difficulty === diff ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
                 }`}
               >
                 {diff}
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
 
           {/* Company Filters */}
-          <div className="flex items-center gap-2">
+          <motion.div variants={fadeInUp} custom={2} className="flex items-center gap-2">
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-2">Company:</span>
             <select
               value={company}
@@ -158,8 +170,8 @@ export default function ProblemList() {
             >
               {COMPANIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Problems Table */}
         <div className="glass-card overflow-hidden mt-4 relative">
@@ -183,10 +195,18 @@ export default function ProblemList() {
                 </tr>
               ) : (
                 filteredProblems.map((p, idx) => (
-                  <tr 
+                  <motion.tr 
                     key={p._id} 
                     onClick={() => navigate(`/problems/${p._id}`)}
-                    className="group cursor-pointer hover:bg-primary/[0.04] transition-all relative overflow-hidden border-b border-transparent hover:border-primary/50"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    whileHover={{ 
+                      backgroundColor: "rgba(124, 58, 237, 0.1)",
+                      x: 4,
+                      transition: { duration: 0.15 }
+                    }}
+                    className="group cursor-pointer hover:bg-primary/[0.04] relative overflow-hidden border-b border-transparent hover:border-primary/50"
                   >
                     
                     <td className="p-5 text-center flex justify-center">{getStatusIcon(p._id)}</td>
@@ -209,7 +229,7 @@ export default function ProblemList() {
                       </div>
                     </td>
                     <td className="p-5 text-right">{validateRate(p._id)}</td>
-                  </tr>
+                  </motion.tr>
                 ))
               )}
             </tbody>

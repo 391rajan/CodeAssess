@@ -2,6 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, Calendar, Target, Award, ListChecks, PieChart, Activity, X, Fingerprint } from 'lucide-react';
 import toast from 'react-hot-toast';
 import StudentHeader from '../components/StudentHeader';
+import { motion, AnimatePresence } from 'framer-motion';
+import { fadeInLeft, staggerContainer, fadeInUp, scaleIn } from '../utils/animations';
+
+const CountUp = ({ end, duration = 1000 }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (end === 0) {
+      setCount(0);
+      return;
+    }
+    let startTimestamp = null;
+    let animationFrameId;
+
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      // easeOut quartic for smooth slow-down at the end
+      const easeOut = 1 - Math.pow(1 - progress, 4);
+      setCount(Math.floor(easeOut * end));
+      
+      if (progress < 1) {
+        animationFrameId = window.requestAnimationFrame(step);
+      } else {
+        setCount(end); // ensure final value is exact
+      }
+    };
+    
+    animationFrameId = window.requestAnimationFrame(step);
+
+    return () => {
+      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [end, duration]);
+
+  return <>{count}</>;
+};
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -54,7 +91,9 @@ export default function Profile() {
   if (loading) {
     return (
       <div className="h-screen w-full bg-[#0a0a0f] flex flex-col items-center justify-center text-white">
-        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="mb-4">
+          <Loader2 className="w-10 h-10 text-primary" />
+        </motion.div>
         <p className="text-gray-400 font-medium">Assembling student metrics...</p>
       </div>
     );
@@ -64,25 +103,26 @@ export default function Profile() {
 
   // Donut Chart logic
   const totalSolved = profile.totalSolved || 0;
-  // Circumference of SVG circle with r=15.91549430918954 is exactly 100
-  // Values represent percentages
   const ePct = totalSolved === 0 ? 0 : (profile.easySolved / totalSolved) * 100;
   const mPct = totalSolved === 0 ? 0 : (profile.mediumSolved / totalSolved) * 100;
   const hPct = totalSolved === 0 ? 0 : (profile.hardSolved / totalSolved) * 100;
 
-  // Dash offsets
-  // Easy starts from 0 (offset 25 logically due to SVG orientation normally, we adjust in CSS rotate)
   const offsetMedium = 100 - ePct;
   const offsetHard = 100 - ePct - mPct;
 
   return (
-    <div className="min-h-screen w-full bg-[#0a0a0f] text-white flex flex-col font-sans relative">
+    <div className="min-h-screen w-full bg-[#0a0a0f] text-white flex flex-col font-sans relative overflow-hidden">
       <StudentHeader />
       
       <main className="flex-1 w-full max-w-7xl mx-auto p-6 lg:p-10 flex flex-col gap-8 relative z-10">
         
         {/* Top Profile Card */}
-        <div className="glass-card p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden">
+        <motion.div 
+          variants={fadeInLeft}
+          initial="initial"
+          animate="animate"
+          className="glass-card p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden"
+        >
           <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-accent" />
           
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-3xl shadow-[0_0_30px_rgba(124,58,237,0.4)] border-2 border-primary/50 flex-shrink-0">
@@ -104,36 +144,41 @@ export default function Profile() {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="glass-card p-6 flex flex-col gap-2">
+        <motion.div 
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        >
+          <motion.div variants={fadeInUp} className="glass-card p-6 flex flex-col gap-2">
              <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">Total Solved</h3>
                 <ListChecks className="w-5 h-5 text-primary opacity-50" />
              </div>
-             <p className="text-4xl font-black text-white">{profile.totalSolved}</p>
-          </div>
-          <div className="glass-card p-6 flex flex-col gap-2 border-t-2 border-t-green-500/50">
+             <p className="text-4xl font-black text-white"><CountUp end={profile.totalSolved} /></p>
+          </motion.div>
+          <motion.div variants={fadeInUp} className="glass-card p-6 flex flex-col gap-2 border-t-2 border-t-green-500/50">
              <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-green-500">Easy</h3>
              </div>
-             <p className="text-4xl font-black text-green-400 drop-shadow-[0_0_10px_rgba(7ade80,0.4)]">{profile.easySolved}</p>
-          </div>
-          <div className="glass-card p-6 flex flex-col gap-2 border-t-2 border-t-yellow-500/50">
+             <p className="text-4xl font-black text-green-400 drop-shadow-[0_0_10px_rgba(7ade80,0.4)]"><CountUp end={profile.easySolved} /></p>
+          </motion.div>
+          <motion.div variants={fadeInUp} className="glass-card p-6 flex flex-col gap-2 border-t-2 border-t-yellow-500/50">
              <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-yellow-500">Medium</h3>
              </div>
-             <p className="text-4xl font-black text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.4)]">{profile.mediumSolved}</p>
-          </div>
-          <div className="glass-card p-6 flex flex-col gap-2 border-t-2 border-t-red-500/50">
+             <p className="text-4xl font-black text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.4)]"><CountUp end={profile.mediumSolved} /></p>
+          </motion.div>
+          <motion.div variants={fadeInUp} className="glass-card p-6 flex flex-col gap-2 border-t-2 border-t-red-500/50">
              <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-red-500">Hard</h3>
              </div>
-             <p className="text-4xl font-black text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.4)]">{profile.hardSolved}</p>
-          </div>
-        </div>
+             <p className="text-4xl font-black text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.4)]"><CountUp end={profile.hardSolved} /></p>
+          </motion.div>
+        </motion.div>
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -153,14 +198,14 @@ export default function Profile() {
                       <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="4"></circle>
                       
                       {/* Hard (Red) */}
-                      {hPct > 0 && <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#ef4444" strokeWidth="4" strokeDasharray={`${hPct} ${100 - hPct}`} strokeDashoffset={offsetHard}></circle>}
+                      {hPct > 0 && <motion.circle initial={{ strokeDashoffset: 100 }} animate={{ strokeDashoffset: offsetHard }} transition={{ duration: 1, ease: "easeOut" }} cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#ef4444" strokeWidth="4" strokeDasharray={`${hPct} ${100 - hPct}`} />}
                       {/* Medium (Yellow) */}
-                      {mPct > 0 && <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#eab308" strokeWidth="4" strokeDasharray={`${mPct} ${100 - mPct}`} strokeDashoffset={offsetMedium}></circle>}
+                      {mPct > 0 && <motion.circle initial={{ strokeDashoffset: 100 }} animate={{ strokeDashoffset: offsetMedium }} transition={{ duration: 1, ease: "easeOut" }} cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#eab308" strokeWidth="4" strokeDasharray={`${mPct} ${100 - mPct}`} />}
                       {/* Easy (Green) */}
-                      {ePct > 0 && <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#22c55e" strokeWidth="4" strokeDasharray={`${ePct} ${100 - ePct}`} strokeDashoffset="0"></circle>}
+                      {ePct > 0 && <motion.circle initial={{ strokeDashoffset: 100 }} animate={{ strokeDashoffset: 0 }} transition={{ duration: 1, ease: "easeOut" }} cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#22c55e" strokeWidth="4" strokeDasharray={`${ePct} ${100 - ePct}`} />}
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                       <span className="text-3xl font-black">{totalSolved}</span>
+                       <span className="text-3xl font-black"><CountUp end={totalSolved} /></span>
                        <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-1">Total</span>
                     </div>
                   </>
@@ -188,8 +233,11 @@ export default function Profile() {
                   boxSizing: "border-box"
                 }}>
                   {profile.recentActivity.map((day, idx) => (
-                    <div 
+                    <motion.div 
                       key={idx} 
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.01 }}
                       style={{
                         width: "100%",
                         aspectRatio: "1",
@@ -198,7 +246,7 @@ export default function Profile() {
                           ? "#22C55E" 
                           : "rgba(255,255,255,0.08)"
                       }}
-                      className="transition-all hover:scale-110 cursor-pointer"
+                      className="cursor-pointer hover:scale-110"
                       title={`${day.date}: ${day.hasSubmission ? 'Activity recorded' : 'No submissions'}`}
                     />
                   ))}
@@ -241,8 +289,14 @@ export default function Profile() {
                      </td>
                    </tr>
                  ) : (
-                   submissions.map((sub) => (
-                     <tr key={sub._id} className="hover:bg-white/[0.02] transition-colors group">
+                   submissions.map((sub, idx) => (
+                     <motion.tr 
+                       key={sub._id} 
+                       initial={{ opacity: 0 }}
+                       animate={{ opacity: 1 }}
+                       transition={{ delay: idx * 0.05 }}
+                       className="hover:bg-white/[0.02] transition-colors group"
+                     >
                        <td className="px-6 py-4">
                          <p className="font-bold text-gray-200 text-sm whitespace-nowrap">{sub.problemTitle}</p>
                        </td>
@@ -274,7 +328,7 @@ export default function Profile() {
                            View Report
                          </button>
                        </td>
-                     </tr>
+                     </motion.tr>
                    ))
                  )}
                </tbody>
@@ -284,77 +338,89 @@ export default function Profile() {
       </main>
 
       {/* AI Report Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-black/60 transition-opacity">
-          <div className="glass-card w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-             
-             <div className="p-5 border-b border-white/10 flex justify-between items-center bg-black/40">
-               <h2 className="text-lg font-bold flex items-center gap-2 bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-                 <Award className="w-5 h-5 text-primary" /> Algorithmic Insight Report
-               </h2>
-               <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
-                 <X className="w-5 h-5" />
-               </button>
-             </div>
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-black/60"
+          >
+            <motion.div 
+              variants={scaleIn}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="glass-card w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
+            >
+               <div className="p-5 border-b border-white/10 flex justify-between items-center bg-black/40">
+                 <h2 className="text-lg font-bold flex items-center gap-2 bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+                   <Award className="w-5 h-5 text-primary" /> Algorithmic Insight Report
+                 </h2>
+                 <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+                   <X className="w-5 h-5" />
+                 </button>
+               </div>
 
-             <div className="p-6 overflow-y-auto custom-scrollbar flex-1 relative">
-                {!selectedReport || Object.keys(selectedReport).length === 0 ? (
-                  <div className="text-center py-12 text-gray-400 flex flex-col items-center">
-                     <Fingerprint className="w-16 h-16 text-gray-600 mb-4 opacity-50" />
-                     <p className="font-semibold tracking-wide uppercase text-sm">No AI report available for this submission.</p>
-                     <p className="text-xs mt-2 text-gray-500">Only fully PASSED submissions receive full algorithmic audits.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                     {/* Complexities */}
-                     <div className="flex flex-wrap gap-4">
-                        <div className="glass-card flex-1 p-4 bg-primary/[0.02] border-primary/20">
-                          <h4 className="text-[10px] uppercase tracking-widest text-primary font-bold mb-2">Time Complexity</h4>
-                          <p className="text-2xl font-black text-white font-mono">{selectedReport.time_complexity}</p>
-                        </div>
-                        <div className="glass-card flex-1 p-4 bg-accent/[0.02] border-accent/20">
-                          <h4 className="text-[10px] uppercase tracking-widest text-accent font-bold mb-2">Space Complexity</h4>
-                          <p className="text-2xl font-black text-white font-mono">{selectedReport.space_complexity}</p>
-                        </div>
-                        <div className="glass-card flex-1 p-4 bg-green-500/[0.02] border-green-500/20">
-                          <h4 className="text-[10px] uppercase tracking-widest text-green-500 font-bold mb-2">Rating Array</h4>
-                          <p className="text-xl font-bold text-white capitalize">{selectedReport.overall_rating}/10 Rating</p>
-                        </div>
-                     </div>
-
-                     {/* Tips */}
-                     {(selectedReport.optimization_tips?.length > 0) && (
-                       <div>
-                         <h4 className="text-xs uppercase tracking-widest text-yellow-500 font-bold mb-4 flex items-center gap-2">
-                           Optimization Analytics
-                         </h4>
-                         <ul className="space-y-3">
-                           {selectedReport.optimization_tips.map((tip, i) => (
-                             <li key={i} className="flex gap-3 text-gray-300 text-sm bg-white/[0.02] border border-white/5 p-3 rounded-lg leading-relaxed">
-                               <span className="text-yellow-500 font-bold font-mono text-xs">{i+1}.</span> {tip}
-                             </li>
-                           ))}
-                         </ul>
+               <div className="p-6 overflow-y-auto custom-scrollbar flex-1 relative">
+                  {!selectedReport || Object.keys(selectedReport).length === 0 ? (
+                    <div className="text-center py-12 text-gray-400 flex flex-col items-center">
+                       <Fingerprint className="w-16 h-16 text-gray-600 mb-4 opacity-50" />
+                       <p className="font-semibold tracking-wide uppercase text-sm">No AI report available for this submission.</p>
+                       <p className="text-xs mt-2 text-gray-500">Only fully PASSED submissions receive full algorithmic audits.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-8">
+                       {/* Complexities */}
+                       <div className="flex flex-wrap gap-4">
+                          <div className="glass-card flex-1 p-4 bg-primary/[0.02] border-primary/20">
+                            <h4 className="text-[10px] uppercase tracking-widest text-primary font-bold mb-2">Time Complexity</h4>
+                            <p className="text-2xl font-black text-white font-mono">{selectedReport.time_complexity}</p>
+                          </div>
+                          <div className="glass-card flex-1 p-4 bg-accent/[0.02] border-accent/20">
+                            <h4 className="text-[10px] uppercase tracking-widest text-accent font-bold mb-2">Space Complexity</h4>
+                            <p className="text-2xl font-black text-white font-mono">{selectedReport.space_complexity}</p>
+                          </div>
+                          <div className="glass-card flex-1 p-4 bg-green-500/[0.02] border-green-500/20">
+                            <h4 className="text-[10px] uppercase tracking-widest text-green-500 font-bold mb-2">Rating Array</h4>
+                            <p className="text-xl font-bold text-white capitalize">{selectedReport.overall_rating}/10 Rating</p>
+                          </div>
                        </div>
-                     )}
 
-                     {/* Style */}
-                     {selectedReport.style_feedback && (
-                       <div>
-                         <h4 className="text-xs uppercase tracking-widest text-cyan-400 font-bold mb-3 flex items-center gap-2">
-                           Style Syntax Diagnostics
-                         </h4>
-                         <div className="text-gray-300 text-sm leading-relaxed p-4 bg-cyan-900/10 border-l-2 border-cyan-500 rounded-r-lg">
-                           {selectedReport.style_feedback.replace(/"/g, '')}
+                       {/* Tips */}
+                       {(selectedReport.optimization_tips?.length > 0) && (
+                         <div>
+                           <h4 className="text-xs uppercase tracking-widest text-yellow-500 font-bold mb-4 flex items-center gap-2">
+                             Optimization Analytics
+                           </h4>
+                           <ul className="space-y-3">
+                             {selectedReport.optimization_tips.map((tip, i) => (
+                               <li key={i} className="flex gap-3 text-gray-300 text-sm bg-white/[0.02] border border-white/5 p-3 rounded-lg leading-relaxed">
+                                 <span className="text-yellow-500 font-bold font-mono text-xs">{i+1}.</span> {tip}
+                               </li>
+                             ))}
+                           </ul>
                          </div>
-                       </div>
-                     )}
-                  </div>
-                )}
-             </div>
-          </div>
-        </div>
-      )}
+                       )}
+
+                       {/* Style */}
+                       {selectedReport.style_feedback && (
+                         <div>
+                           <h4 className="text-xs uppercase tracking-widest text-cyan-400 font-bold mb-3 flex items-center gap-2">
+                             Style Syntax Diagnostics
+                           </h4>
+                           <div className="text-gray-300 text-sm leading-relaxed p-4 bg-cyan-900/10 border-l-2 border-cyan-500 rounded-r-lg">
+                             {selectedReport.style_feedback.replace(/"/g, '')}
+                           </div>
+                         </div>
+                       )}
+                    </div>
+                  )}
+               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

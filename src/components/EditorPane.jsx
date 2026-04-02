@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import Editor from '@monaco-editor/react';
 import { Play, Loader2, AlertCircle, PlayCircle, Lightbulb } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import TestCasesPanel from './TestCasesPanel';
 import HintModal from './HintModal';
 
@@ -187,7 +188,7 @@ export default function EditorPane({ className, onSubmit, problem, hintState, on
       <div className="glass-card flex-1 flex flex-col overflow-hidden border-white/5 shadow-inner transition-all duration-300">
 
         {/* Monaco Editor */}
-        <div className="flex-1 w-full bg-[#0a0a0f]/80 relative rounded-t-xl overflow-hidden pt-4 min-h-[300px]">
+        <div className="flex-1 w-full bg-[#0a0a0f]/80 relative rounded-t-xl overflow-hidden min-h-[300px]">
           <Editor
             height="100%"
             language={language === 'cpp' ? 'cpp' : language}
@@ -197,8 +198,16 @@ export default function EditorPane({ className, onSubmit, problem, hintState, on
               setCode(value);
               if (validationError) setValidationError('');
             }}
+            onMount={(editor, monaco) => {
+              // Fix cursor misalignment: Fira Code loads async from Google Fonts.
+              // Monaco calculates char widths on init with fallback font, then the
+              // cursor drifts once the real font arrives. Remeasure after font loads.
+              document.fonts.ready.then(() => {
+                monaco.editor.remeasureFonts();
+              });
+            }}
             options={{
-              fontFamily: 'Fira Code',
+              fontFamily: "'Fira Code', monospace",
               fontSize: 14,
               minimap: { enabled: false },
               padding: { top: 16 },
@@ -210,12 +219,19 @@ export default function EditorPane({ className, onSubmit, problem, hintState, on
         </div>
 
         {/* Validation Error Banner */}
-        {validationError && (
-          <div className="flex items-center gap-2 px-6 py-2.5 bg-red-500/10 border-t border-red-500/20 text-red-400 text-sm">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{validationError}</span>
-          </div>
-        )}
+        <AnimatePresence>
+          {validationError && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="flex items-center gap-2 px-6 py-2.5 bg-red-500/10 border-t border-red-500/20 text-red-400 text-sm"
+            >
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{validationError}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Action Bar */}
         <div className="w-full border-t border-white/10 bg-black/40 flex items-center justify-between px-6 py-3 rounded-b-xl z-20 gap-3 flex-wrap">
@@ -251,63 +267,70 @@ export default function EditorPane({ className, onSubmit, problem, hintState, on
           {/* Right: Run Code + Submit */}
           <div className="flex items-center gap-3">
             {/* BUG B FIX: Run Code disabled ONLY when isRunningCode */}
-            <button
+            <motion.button
               id="run-code-btn"
               onClick={handleRunCode}
               disabled={isRunningCode}
+              whileHover={isRunningCode ? {} : { scale: 1.02 }}
+              whileTap={isRunningCode ? {} : { scale: 0.95 }}
               className={clsx(
-                'flex items-center gap-2 px-5 py-2 rounded-lg font-semibold text-white transition-all shadow-lg text-sm active:scale-95',
+                'flex items-center gap-2 px-5 py-2 rounded-lg font-semibold text-white transition-all shadow-lg text-sm',
                 isRunningCode
                   ? 'bg-cyan-500/50 cursor-not-allowed opacity-80'
                   : 'bg-cyan-500 hover:bg-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-400/50',
               )}
             >
               {isRunningCode ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Running...</>
+                <><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Running...</>
               ) : (
                 <><PlayCircle className="w-4 h-4 fill-current text-cyan-100" /> Run Code</>
               )}
-            </button>
+            </motion.button>
 
             {/* BUG B FIX: Submit disabled ONLY when isAnalyzing */}
-            <button
+            <motion.button
               id="submit-btn"
               onClick={handleSubmit}
               disabled={isAnalyzing}
+              whileHover={isAnalyzing ? {} : { scale: 1.02 }}
+              whileTap={isAnalyzing ? {} : { scale: 0.95 }}
               className={clsx(
-                'flex items-center gap-2 px-6 py-2 rounded-lg font-semibold text-white transition-all shadow-lg text-sm active:scale-95',
+                'flex items-center gap-2 px-6 py-2 rounded-lg font-semibold text-white transition-all shadow-lg text-sm',
                 isAnalyzing
                   ? 'bg-primary/50 cursor-not-allowed opacity-80'
                   : 'bg-primary hover:bg-primary/90 hover:shadow-primary/20',
               )}
             >
               {isAnalyzing ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</>
+                <><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Analyzing...</>
               ) : (
                 <><Play className="w-4 h-4 fill-current" /> Submit</>
               )}
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
 
       {/* Test Cases Collapsible Panel */}
-      {isPanelOpen && (
-        <TestCasesPanel
-          isOpen={isPanelOpen}
-          problem={problem}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          customInput={customInput}
-          setCustomInput={setCustomInput}
-          customExpected={customExpected}
-          setCustomExpected={setCustomExpected}
-          customError={customError}
-          runResults={runResults}
-          runTime={runTime}
-          isAnalyzing={isRunningCode}
-        />
-      )}
+      <AnimatePresence>
+        {isPanelOpen && (
+          <TestCasesPanel
+            isOpen={isPanelOpen}
+            onClose={() => setIsPanelOpen(false)}
+            problem={problem}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            customInput={customInput}
+            setCustomInput={setCustomInput}
+            customExpected={customExpected}
+            setCustomExpected={setCustomExpected}
+            customError={customError}
+            runResults={runResults}
+            runTime={runTime}
+            isAnalyzing={isRunningCode}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Hint Modal */}
       <HintModal

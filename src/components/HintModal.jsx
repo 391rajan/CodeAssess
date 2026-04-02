@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Lock, Lightbulb, Loader2, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const API_HINTS = 'http://localhost:5000/api/hints';
 
@@ -92,8 +93,11 @@ export default function HintModal({
     const isLoading = loadingLevel === level;
 
     return (
-      <div
+      <motion.div
         key={level}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: level * 0.1 }}
         className={`border-l-4 ${cfg.borderClass} ${cfg.bgClass} rounded-r-xl p-4 border border-white/5 transition-all duration-300`}
       >
         {/* Row header */}
@@ -116,7 +120,9 @@ export default function HintModal({
         {isUsed && hintData?.text ? (
           <p className="text-sm text-gray-300 leading-relaxed">{hintData.text}</p>
         ) : isAvailable ? (
-          <button
+          <motion.button
+            whileHover={isLoading ? {} : { scale: 1.02 }}
+            whileTap={isLoading ? {} : { scale: 0.98 }}
             onClick={() => handleGetHint(level)}
             disabled={isLoading}
             className={`mt-1 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all border
@@ -136,84 +142,95 @@ export default function HintModal({
                 Get Hint {level}
               </>
             )}
-          </button>
+          </motion.button>
         ) : (
           <p className="text-xs text-gray-600 italic mt-1">
             🔒 Complete Hint {level - 1} to unlock
           </p>
         )}
-      </div>
+      </motion.div>
     );
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal card */}
-      <div
-        className="relative z-10 w-full max-w-lg flex flex-col animate-in fade-in zoom-in duration-200"
-        style={{
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          backdropFilter: 'blur(16px)',
-          borderRadius: '16px',
-          maxHeight: '90vh',
-        }}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between p-5 border-b border-white/10 flex-shrink-0">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Lightbulb className="w-5 h-5 text-yellow-400 flex-shrink-0" />
-              <h2 className="text-lg font-bold text-white">AI Hints</h2>
-              {/* Remaining badge */}
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                  hintsRemaining === 3
-                    ? 'bg-green-500/20 text-green-400'
-                    : hintsRemaining === 2
-                    ? 'bg-yellow-500/20 text-yellow-400'
-                    : hintsRemaining === 1
-                    ? 'bg-orange-500/20 text-orange-400'
-                    : 'bg-gray-500/20 text-gray-400'
-                }`}
-              >
-                {hintsRemaining} remaining
-              </span>
-            </div>
-            <p className="text-xs text-gray-500 leading-snug max-w-xs">
-              Get up to 3 AI-powered hints. Each hint reveals more.
-              Hints are saved — come back anytime.
-            </p>
-          </div>
-
-          {/* X Close button */}
-          <button
+    <AnimatePresence>
+      {isOpen && problem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={onClose}
-            className="ml-4 p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-all flex-shrink-0"
-            title="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+          />
 
-        {/* Body */}
-        <div className="p-5 flex flex-col gap-3 overflow-y-auto custom-scrollbar">
-          {hintsUsed === 3 && (
-            <div className="text-center py-3 text-gray-500 text-sm border border-white/5 rounded-xl bg-white/[0.02]">
-              No hints remaining. Try to solve it yourself! 💪
+          {/* Modal card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="relative z-10 w-full max-w-lg flex flex-col"
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(16px)',
+              borderRadius: '16px',
+              maxHeight: '90vh',
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between p-5 border-b border-white/10 flex-shrink-0">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Lightbulb className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+                  <h2 className="text-lg font-bold text-white">AI Hints</h2>
+                  {/* Remaining badge */}
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                      hintsRemaining === 3
+                        ? 'bg-green-500/20 text-green-400'
+                        : hintsRemaining === 2
+                        ? 'bg-yellow-500/20 text-yellow-400'
+                        : hintsRemaining === 1
+                        ? 'bg-orange-500/20 text-orange-400'
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}
+                  >
+                    {hintsRemaining} remaining
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 leading-snug max-w-xs">
+                  Get up to 3 AI-powered hints. Each hint reveals more.
+                  Hints are saved — come back anytime.
+                </p>
+              </div>
+
+              {/* X Close button */}
+              <button
+                onClick={onClose}
+                className="ml-4 p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-all flex-shrink-0"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          )}
-          {renderHintSlot(1)}
-          {renderHintSlot(2)}
-          {renderHintSlot(3)}
+
+            {/* Body */}
+            <div className="p-5 flex flex-col gap-3 overflow-y-auto custom-scrollbar">
+              {hintsUsed === 3 && (
+                <div className="text-center py-3 text-gray-500 text-sm border border-white/5 rounded-xl bg-white/[0.02]">
+                  No hints remaining. Try to solve it yourself! 💪
+                </div>
+              )}
+              {renderHintSlot(1)}
+              {renderHintSlot(2)}
+              {renderHintSlot(3)}
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }

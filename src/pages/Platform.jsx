@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import ProblemPane from '../components/ProblemPane';
 import EditorPane from '../components/EditorPane';
 import ReportCard from '../components/ReportCard';
@@ -75,7 +76,9 @@ export default function Platform() {
   if (loading) {
     return (
       <div className="h-screen w-full bg-background flex flex-col items-center justify-center text-white">
-        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="mb-4">
+          <Loader2 className="w-10 h-10 text-primary" />
+        </motion.div>
         <p className="text-gray-400 font-medium">Entering development environment...</p>
       </div>
     );
@@ -84,18 +87,25 @@ export default function Platform() {
   if (error || !problem) {
     return (
       <div className="h-screen w-full bg-background flex flex-col items-center justify-center text-white p-6">
-        <div className="glass-card p-8 flex flex-col items-center max-w-md text-center">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className="glass-card p-8 flex flex-col items-center max-w-md text-center"
+        >
           <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
           <h2 className="text-xl font-bold mb-2 text-red-300">Connection Error</h2>
           <p className="text-gray-300 mb-6">{error}</p>
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
             onClick={fetchProblemData}
             className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 rounded-lg font-semibold transition-all"
           >
             <RefreshCw className="w-4 h-4" />
             Retry Connection
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       </div>
     );
   }
@@ -105,17 +115,31 @@ export default function Platform() {
       <StudentHeader />
       
       <div className="flex flex-col lg:flex-row flex-1 w-full overflow-hidden">
-        <ProblemPane 
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4 }}
           className="w-full lg:w-1/2 lg:border-r border-white/10"
-          problem={problem} 
-        />
-        <EditorPane
+        >
+          <ProblemPane 
+            className="h-full"
+            problem={problem} 
+          />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
           className="w-full lg:w-1/2"
-          problem={problem}
-          onSubmit={handleSubmitComplete}
-          hintState={hintState}
-          onHintUsed={handleHintUsed}
-        />
+        >
+          <EditorPane
+            className="h-full"
+            problem={problem}
+            onSubmit={handleSubmitComplete}
+            hintState={hintState}
+            onHintUsed={handleHintUsed}
+          />
+        </motion.div>
       </div>
 
       <ReportCard

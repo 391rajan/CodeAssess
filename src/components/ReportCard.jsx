@@ -1,13 +1,12 @@
 import React from 'react';
 import clsx from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2,
   XCircle,
   Clock,
   AlertTriangle,
   Terminal,
-  ChevronDown,
-  ChevronUp,
   HardDrive,
   Zap,
   MessageSquare,
@@ -66,19 +65,27 @@ const parseComplexity = (str) => {
 };
 
 export default function ReportCard({ data, isVisible, onClose }) {
-  if (!isVisible || !data) return null;
+  return (
+    <AnimatePresence>
+      {isVisible && data && (
+        <ReportCardInner data={data} onClose={onClose} />
+      )}
+    </AnimatePresence>
+  );
+}
 
+function ReportCardInner({ data, onClose }) {
   const { status, output, passedCount, totalCount, aiReport } = data;
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.COMPILE_ERROR;
   const StatusIcon = cfg.icon;
 
   return (
-    <div
-      className={clsx(
-        'glass-card fixed bottom-6 right-6 w-[420px] shadow-2xl flex flex-col gap-0 z-50 overflow-hidden',
-        'transition-all duration-500 ease-out',
-        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-[120%] opacity-0 pointer-events-none'
-      )}
+    <motion.div
+      initial={{ opacity: 0, y: 100 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 100 }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      className="glass-card fixed bottom-6 right-6 w-[420px] shadow-2xl flex flex-col gap-0 z-50 overflow-hidden"
     >
       {/* ─── Header ─── */}
       <div className="flex items-center justify-between p-5 border-b border-white/10 relative">
@@ -103,14 +110,20 @@ export default function ReportCard({ data, isVisible, onClose }) {
           ✕
         </button>
         <div className="flex items-center gap-3">
-          <StatusIcon
-            className={clsx(
-              'w-6 h-6',
-              status === 'PASSED' ? 'text-green-400' :
-              status === 'TIME_LIMIT_EXCEEDED' ? 'text-yellow-400' :
-              'text-red-400'
-            )}
-          />
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, delay: 0.2 }}
+          >
+            <StatusIcon
+              className={clsx(
+                'w-6 h-6',
+                status === 'PASSED' ? 'text-green-400' :
+                status === 'TIME_LIMIT_EXCEEDED' ? 'text-yellow-400' :
+                'text-red-400'
+              )}
+            />
+          </motion.div>
           <h2
             className={clsx(
               'text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r',
@@ -136,12 +149,17 @@ export default function ReportCard({ data, isVisible, onClose }) {
             {aiReport ? (
               <div className="flex flex-col gap-5">
                 {aiReport.overall_rating && (
-                  <div className="flex items-center gap-3">
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="flex items-center gap-3"
+                  >
                     <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Overall Rating</span>
                     <span className={clsx("px-3 py-1 rounded-full border text-xs font-bold tracking-wide", getRatingColor(aiReport.overall_rating))}>
                       {aiReport.overall_rating}
                     </span>
-                  </div>
+                  </motion.div>
                 )}
 
                 <div className="grid grid-cols-2 gap-3">
@@ -183,10 +201,16 @@ export default function ReportCard({ data, isVisible, onClose }) {
                   </div>
                   <div className="flex flex-col gap-2.5">
                     {aiReport.optimization_tips?.map((tip, idx) => (
-                      <div key={idx} className="bg-white/[0.03] border border-white/5 border-l-4 border-l-primary p-3 rounded-r-lg rounded-l-sm text-sm text-gray-300 flex items-start gap-3 shadow-sm">
+                      <motion.div 
+                        key={idx} 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 + idx * 0.1 }}
+                        className="bg-white/[0.03] border border-white/5 border-l-4 border-l-primary p-3 rounded-r-lg rounded-l-sm text-sm text-gray-300 flex items-start gap-3 shadow-sm"
+                      >
                         <span className="text-primary font-bold font-mono text-xs mt-0.5">{idx + 1}.</span>
                         <span className="leading-relaxed">{tip}</span>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
@@ -250,6 +274,6 @@ export default function ReportCard({ data, isVisible, onClose }) {
         )}
 
       </div>
-    </div>
+    </motion.div>
   );
 }
