@@ -95,7 +95,7 @@ export default function AdminDashboard() {
                </Link>
                <span className="text-gray-600">|</span>
                <Link to="/admin/users" className="text-accent hover:text-white flex items-center gap-2 text-sm transition-colors w-fit font-semibold">
-                 <Users className="w-4 h-4" /> User Management
+                 <Users className="w-4 h-4" /> Registered Students
                </Link>
             </div>
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">

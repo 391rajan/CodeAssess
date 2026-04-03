@@ -33,9 +33,10 @@ const userSchema = new mongoose.Schema(
       },
       default: "student",
     },
-    isApproved: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "approved",
     },
     solvedProblems: [
       {
@@ -51,16 +52,6 @@ const userSchema = new mongoose.Schema(
     lastActiveDate: {
       type: Date,
       default: null,
-    },
-    role: {
-      type: String,
-      enum: ['student', 'admin'],
-      default: 'student',
-    },
-    status: {
-      type: String,
-      enum: ['pending', 'approved', 'rejected'],
-      default: 'pending',
     },
   },
   {

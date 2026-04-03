@@ -39,6 +39,7 @@ export default function Register() {
       if (data.success) {
         setSuccess(true);
         toast.success("Successfully Registered!");
+        setTimeout(() => navigate('/login'), 2000);
       } else {
         toast.error(data.error || 'Registration failed');
       }
@@ -77,7 +78,7 @@ export default function Register() {
               <CheckCircle2 className="w-12 h-12 text-green-500" />
               <div>
                 <h2 className="text-lg font-bold mb-2">Registration Successful!</h2>
-                <p className="text-sm">Your account is pending admin approval. You will be notified once approved.</p>
+                <p className="text-sm">You can now login.</p>
               </div>
               <Link to="/login" className="px-6 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 font-semibold rounded-lg transition-colors mt-2 border border-green-500/30">
                 Return to Login

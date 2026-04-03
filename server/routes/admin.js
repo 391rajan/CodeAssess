@@ -18,34 +18,6 @@ router.get("/users", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// PUT /api/admin/users/:id/status
-// Update a student's status (approved, rejected, pending)
-router.put("/users/:id/status", requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    
-    if (!['pending', 'approved', 'rejected'].includes(status)) {
-      return res.status(400).json({ success: false, error: "Invalid status" });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      id, 
-      { status }, 
-      { new: true, runValidators: true }
-    ).select("-passwordHash");
-
-    if (!updatedUser) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
-
-    res.status(200).json({ success: true, data: updatedUser });
-  } catch (error) {
-    console.error("Error updating user status:", error);
-    res.status(500).json({ success: false, error: "Failed to update user status" });
-  }
-});
-
 // ---------- PROBLEM MANAGEMENT ROUTES ----------
 
 // GET /api/admin/problems

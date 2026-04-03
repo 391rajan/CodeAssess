@@ -11,7 +11,6 @@ export default function Login() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '', rememberMe: false });
-  const [warningMessage, setWarningMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, type, checked, value } = e.target;
@@ -20,7 +19,6 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setWarningMessage('');
     if (!formData.email || !formData.password) {
       return toast.error("Please enter email and password");
     }
@@ -36,8 +34,8 @@ export default function Login() {
       const data = await res.json();
       
       if (res.status === 403) {
-        setWarningMessage(data.error);
-        toast.error("Access Denied");
+        toast.error(data.error || "Access Denied");
+        setLoading(false);
         return;
       }
 
@@ -72,23 +70,7 @@ export default function Login() {
           <p className="text-gray-400 mt-2">Student Portal Login</p>
         </div>
 
-        <AnimatePresence>
-          {warningMessage && (
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              exit={{ opacity: 0, y: -20 }}
-              className={`mb-6 p-4 rounded-lg flex items-start gap-3 text-sm leading-relaxed ${
-                warningMessage.toLowerCase().includes('rejected') 
-                  ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
-                  : 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
-              }`}
-            >
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <p>{warningMessage}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
 
         <motion.form 
           variants={staggerContainer}

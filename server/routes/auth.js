@@ -52,12 +52,12 @@ router.post("/register", async (req, res) => {
       email: emailLc,
       passwordHash,
       role: "student",
-      status: "pending",
+      status: "approved",
     });
 
     res.status(201).json({
       success: true,
-      message: "Registration pending admin approval",
+      message: "Registration successful",
     });
   } catch (error) {
     console.error("Registration error:", error);
@@ -85,14 +85,6 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ success: false, error: "Invalid credentials" });
     }
 
-    if (user.role === "student") {
-      if (user.status === "rejected") {
-        return res.status(403).json({ success: false, error: "Your account has been rejected. Contact admin." });
-      }
-      if (user.status === "pending") {
-        return res.status(403).json({ success: false, error: "Your account is pending admin approval" });
-      }
-    }
 
     generateToken(res, user._id, rememberMe === true, user.role);
 
